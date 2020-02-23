@@ -1,0 +1,7 @@
+library/*
+
+exercises/**/*.log
+exercises/**/*.pdf
+
+summary/**/*.log
+summary/**/*.pdf
