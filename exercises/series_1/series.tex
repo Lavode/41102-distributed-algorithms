@@ -139,8 +139,8 @@
 
 \subsection{Scenario}
 
-Consider the scenario of a `smart' flower pot which monitors, among other
-things, soil moisture, and automatically waters the soil if needed.
+Consider the scenario of a `smart' flower pot which monitors light levels, soil
+moisture, soil acidity, as well as automatically waters the soil if needed.
 
 This smart flower pot (\textbf{system C}) consist of, among other things, a
 sensor array (\textbf{system B}). This sensor array contains sensor for
@@ -152,9 +152,9 @@ acidity, light, and moisture (\textbf{system A}).
 	\toprule
 	System & Fault & Error & Failure \\
 	\midrule
-	Soil hygrometer & Corrosion of electrode & Resistance between two electrodes does not correlate to moisture of soil & Reported soil resistance is stuck at high value \\
-	Sensor array & Reported soil resistance is permanently high & Soil moisture calculation by embedded microcontroller produces low moisture value permanently & Sensor array reports low moisture value even if actual moisture value is high \\
-	Smart flower pot & Reported soil moisture value is low permanently & Watering valve is open even when soil moisture is high & Pot overflows with water \\
+	Soil hygrometer & Corrosion of electrode & Resistance between two electrodes does not correlate with moisture of soil & Reported soil resistance is stuck at high value \\
+	Sensor array & Reported soil resistance is permanently high & Soil moisture calculation by embedded micro controller produces low moisture value permanently & Sensor array reports low moisture value even if actual moisture value is high \\
+	Smart flower pot & Reported soil moisture value is low permanently & Watering valve is open even when soil moisture is high & Pot is flooded with water \\
 	\bottomrule
 \end{tabular}
 
