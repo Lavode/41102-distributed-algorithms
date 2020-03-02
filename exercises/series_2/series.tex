@@ -1,0 +1,261 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Distributed algorithms - Series 2}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41102 - Distributed algorithms}
+\title{Series 2}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{1}
+
+\chapter{Series 2}
+
+\section{Pizza or pasta?}
+
+Given the following assumptions:
+\begin{itemize}
+	\item Every customer places at most one order at a time - for either
+		pizza or pasta.
+	\item The communication channel between customers, Alice, Bob and Carol
+		is a perfect link
+	\item Our algorithms have access to basic data structures such as hash
+		maps and queues.
+\end{itemize}
+
+Then the following modules and algorithms describe an implementation providing
+the requested properties:
+
+\begin{itemize}
+	\item Every customer will get his/her order delivered
+	\item No dish is delivered if it was not ordered
+	\item Every customer gets each order exactly once
+\end{itemize}
+
+\begin{library}{Module Carol $c$}
+        \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true]
+		Requests:
+		  <c.prepare | customer>: Start preparing pasta for the given customer
+		Indications:
+		  <c.ready | customer>: Pasta for given customer is ready
+		  <c.reject | customer>: Unable to prepare pasta for given customer as queue is full
+		Properties:
+		  Every submitted order is eventually rejected or finished
+		  If an order was placed it is prepared exactly once
+		  Only orders which are placed will be prepared
+
+		UPON init:
+		  # FIFO queue of fixed size, supports .push, .pop and .size
+		  queue := Queue(size = 7)
+
+		UPON <c.prepare | customer>:
+		  if queue.size == 3:
+		    TRIGGER <c.reject | customer>
+		  else
+		    queue.push(customer)
+
+		UPON queue.size != 0:
+		  customer = queue.pop
+		  prepare(customer)
+		  TRIGGER <c.ready | customer>
+        \end{lstlisting}
+\end{library}
+
+\begin{library}{Module Bob $b$}
+        \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true]
+		Requests:
+		  <b.prepare | customer>: Start preparing a pizza for the given customer
+		Indications:
+		  <b.ready | customer>: Pizza for given customer is ready
+		  <b.reject | customer>: Unable to prepare pizza for given customer as queue is full
+		Properties:
+		  Every submitted order is eventually rejected or finished
+		  If an order was placed it is prepared exactly once
+		  Only orders which are placed will be prepared
+
+		UPON init:
+		  # FIFO queue of fixed size, supports .push, .pop and .size
+		  queue := Queue(size = 3)
+
+		UPON <b.prepare | customer>:
+		  if queue.size == 3:
+		    TRIGGER <b.reject | customer>
+		  else
+		    queue.push(customer)
+
+		UPON queue.size != 0:
+		  customer = queue.pop
+		  prepare(customer)
+		  TRIGGER <b.ready | customer>
+        \end{lstlisting}
+\end{library}
+
+\begin{library}{Module Alice $a$}
+        \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true]
+		Requests:
+		  <a.order | customer, dish>: Place order for given dish by given customer
+		  
+		Indications:
+		  <a.serve | customer, dish>: Serve given dish to given customer
+
+		Properties:
+		  Every submitted order is eventually served exactly once
+		  No order is served unless it was submitted
+
+		UPON init:
+		  # FIFO queue of unbounded size
+		  queue := Queue()
+
+		UPON <a.order | customer, dish>:
+		  if dish == pizza:
+		    TRIGGER <b.prepare | customer>
+		  elsif dish == pasta:
+		    TRIGGER <c.prepare | customer>
+
+		UPON <b.reject | customer>:
+		  queue.push((customer, pizza))
+
+		UPON <c.reject | customer>:
+		  queue.push((customer, pasta))
+
+		UPON queue.size != 0:
+		  (customer, dish) := queue.pop
+		  TRIGGER <a.order | customer, dish>
+
+		UPON <b.ready | customer>:
+		  TRIGGER <a.serve | customer, pizza>
+
+		UPON <c.ready | customer>:
+		  TRIGGER <a.serve | customer, pasta>
+        \end{lstlisting}
+\end{library}
+
+\section{Safety and liveness}
+
+\section{Unreliable clocks}
+
+\end{document}
