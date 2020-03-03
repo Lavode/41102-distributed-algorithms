@@ -255,6 +255,7 @@ the requested properties:
 \end{library}
 
 \section{Safety and liveness}
+\label{seq:safety_liveness}
 
 \subsection{If some general attacks at time $t$, then the other general attacks at the same time.}
 \label{seq:liveness_property}
@@ -267,6 +268,7 @@ holds. As such the property cannot be a safety property, so must be a liveness
 property instead.
 
 \subsection{If $m_2$ arrives after time $t$, then General $A$ will attack after General $B$}
+\label{seq:no_unconfirmed_attack_safety}
 
 This property ensures that general $A$ will only attack if a confirmation by
 $B$ via means of $m_2$ is received, and not out of the blue, making it a safety
@@ -302,5 +304,49 @@ This property is a combination of the safety property from sections
 properties of both a safety and liveness property.
 
 \section{Unreliable clocks}
+
+\subsection{Safety violations}
+
+\subsubsection{First example}
+
+\label{seq:no_unonfirmed_attack_safety}
+
+Consider the scenario from exercise \ref{seq:safety_liveness}, with the
+change that general B's clock is lagging behind general A's.
+
+If $m_2$ arrives after time $t$, yet general B's clock is lagging enough,
+general $A$ might still attack before general $B$, violating the safety
+property \ref{seq:no_unconfirmed_attack_safety}.
+
+\subsubsection{Second example}
+
+Consider a system of automatic train carts. A central system is responsible for
+the routing of carts to their destination, whereas each station has a local
+system which is responsible for showing which cart will depart from which
+platform. Both stations access a shared schedule, which defines which carts
+depart from which platforms at what time. Assume that carts are always on time.
+
+One possible safety property is then ``Every platform with a cart on it has the
+cart's destination shown'', which is trivially violated if the two clocks are
+out of sync.
+
+\subsection{Liveness violations}
+
+\subsubsection{First example}
+
+Consider once more the scenario of exercise \ref{seq:safety_liveness}, with the
+two generals' clocks not matching. Assuming $m_1$ and $m_2$ are not
+intercepted, and arrive before time $t$, the liveness property
+\ref{seq:liveness_property} is easily violated as, in spite of both wanting to
+attack at time $t$, their mismatching clocks prevents both from attacking at
+the same time.
+
+\subsubsection{Second example}
+
+Consider again the automatic train carts from before. One possible liveness
+property is then ``A cart labelled with destination $A$ will eventually arrive
+at destination $A$'', which is violated if, due to the mismatching clocks, the
+cart on the platform labelled with $A$ is actually going to $B$.
+
 
 \end{document}
