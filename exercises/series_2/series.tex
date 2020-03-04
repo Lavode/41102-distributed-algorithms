@@ -258,14 +258,15 @@ the requested properties:
 \label{seq:safety_liveness}
 
 \subsection{If some general attacks at time $t$, then the other general attacks at the same time.}
-\label{seq:liveness_property}
+\label{seq:safety_property}
 
-Consider an execution right after $m_1$ arrived at general $B$. In this
-execution, $B$ will attack at time $t$, yet $A$ will not attack at all, so the
-property is violated. Consider then an extension of $E$ after $m_2$ arrived at
-general $A$, in which case both generals attack at time $t$, and the property
-holds. As such the property cannot be a safety property, so must be a liveness
-property instead.
+Consider an execution where general $B$ attacked at time $t$ yet general $A$
+did not, as $m_2$ was either intercepted or delayed to the point of arriving
+after $t$. Let the prefix execution $E'$ be the execution up to $t$. In any
+extension thereof, general $A$ will still not attack at time $t$, as $m_2$ was
+intercepted, or delayed up to that point in time.
+
+Hence this is a safety property.
 
 \subsection{If $m_2$ arrives after time $t$, then General $A$ will attack after General $B$}
 \label{seq:no_unconfirmed_attack_safety}
@@ -284,22 +285,19 @@ at the same time as general $B$ cannot be undone.
 Consider an execution $E$ before $m_1$ arrived. At this point the property is
 violated, as $m_1$ might be intercepted, so it's not yet guaranteed that
 general $B$ will attack. An extension thereof where $m_1$ arrived will however
-fulfill the property, making it a liveness property.
+fulfil the property, making it a liveness property.
 
 \subsection{If messengers $m_1$ and $m_2$ are not intercepted, then eventually both generals attack.}
-\label{seq:safety_property}
+\label{seq:liveness_property}
 
-Consider an execution $E$ where the messengers are not intercepted. In any
-extension of $E$ the messenges will arrive eventually, and the generals will
-attack.
-
-Further if in another execution $E'$ one or both of the messengers were to be
-intercepted, then any extension of $E'$ would have at least one of the generals
-not attacking, making this a safety property.
+Consider an execution $E$ where the messengers are not intercepted. Consider a
+prefix $E'$ at the time where $m_2$ arrived at general $A$. Any extension
+thereof will have the two generals attacking eventually, making it a liveness
+property.
 
 \subsection{If $m_1$ and $m_2$ are not intercepted, then eventually both generals attack at time $t$.}
 
-This property is a combination of the safety property from sections
+This property is a combination of the liveness and safety properties from sections
 \ref{seq:liveness_property} and \ref{seq:safety_property}, making it have
 properties of both a safety and liveness property.
 
