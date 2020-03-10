@@ -54,6 +54,10 @@
 % Math symbols
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{amsthm}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
 % General symbols
 \usepackage{stmaryrd}
 
@@ -137,7 +141,7 @@
 
 \section{Relations among failure detectors}
 
-Given a non-perfect failure detector $NP$, with strong accuracy and weak
+Given a non-perfect failure detector $NP$ with strong accuracy and weak
 completness, a perfect failure detector $P$ can be implemented as follows. This
 utilizes the fact that, if a process $p$ running $NP$ detects a process $p'$ to
 have crashed, due to the strong accuracy property of $NP$, $p'$ is guaranteed
@@ -150,14 +154,14 @@ to actually have crashed.
       detected := {}
 
     UPON <NP.crash | p>:
-      $\text{detected} := $\text{detected} \cup p$
-      $\text{alive} := $\text{alive} \cup \{p\}$
+      $\text{detected} := \text{detected} \cup \{p\}$
+      $\text{alive} := \text{alive} \setminus \{p\}$
 
       SEND [p crashed] to all $p' \in \Pi$
 
     UPON receive [p crashed] from $p'$:
-      $\text{detected} := $\text{detected} \cup p$
-      $\text{alive} := $\text{alive} \cup p$
+      $\text{detected} := \text{detected} \cup p$
+      $\text{alive} := \text{alive} \cup p$
   \end{lstlisting}
 \end{library}
 
@@ -174,9 +178,8 @@ object, with the following properties:
 \end{itemize}
 
 With this, a perfect failure detector based on unidirectional heartbeats can be
-implemented as follows, with an interface identicaly to the one in the lecture.
-
-For conciseness we assume that we have access to a timer which can be reset - resetting its countdown to the given value - as well as
+implemented as follows, with an identical interface to the perfect failure
+detector presented in the lecture.
 
 \begin{library}{Implementing $P$ using heartbeats}
   \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true]
@@ -184,23 +187,68 @@ For conciseness we assume that we have access to a timer which can be reset - re
       alive := $\Pi$
       detected := {}
 
-      for $p \in \Pi$:
-        // Start timer tracking lifetime of $p$
-        start_timer($\Delta + \Phi$, p)
+      for $p \in (\Pi \setminus \{self\})$:
+        // Per process timer to track lifetime of remote processes
+        start_timer($\Delta + \Phi + 1$, p)
+
+      // Start timer to periodically send own heartbeats, and send initial heartbeat
+      start_timer{$\Delta + \Phi$, self)
+      SEND [HEARTBEAT] to all $p' \in \text{alive} \setminus \{\text{self}\}$
+      
 
     UPON <timeout | p>:
-      $\text{detected} := $\text{detected} \cup p$
-      $\text{alive} := $\text{alive} \cup \{p\}$
+      if p == self:
+	reset_timer(self)
+	SEND [HEARTBEAT] to all $p' \in \text{alive} \setminus \{\text{self}\}$
+      else:
+        $\text{detected} := \text{detected} \cup \{p\}$
+        $\text{alive} := \text{alive} \setminus \{p\}$
 
-      TRIGGER <P.Crash | p>
+        TRIGGER <P.Crash | p>
 
     UPON receive [HEARTBEAT] from p:
       // Restart timer tracking lifetime of $p$
-      restart_timer(p)
+      reset_timer(p)
   \end{lstlisting}
 \end{library}
 
+As every process sends a heartbeat in the beginning, as well as every $\Delta +
+\Phi$, with each heartbeat taking at most $\Delta + \Phi$ to arrive and be
+processed, not receiving any heartbeat from any process for $\Delta + \Phi + 1$
+guarantees that it is not alive.
+
 \section{Quorum systems}
 
+\subsection{Singleton}
+
+If the sole process $p \in \Pi$ is faulty, there exists no singleton quorum
+system $\mathcal{Q}$, as its sole quorum would have to contain $p$. Hence the
+minimum and maximum number of tolerable failed process is $0$.
+
+\subsection{Majority}
+
+As each quorum of the majority quorum system has a cardinality of
+$\ceil*{\frac{n + 1}{2}}$, there must clearly be at most $n - \ceil*{\frac{n +
+1}{2}}$ faulty processes in order to get at least one quorum satisfying the
+requirement. For $n \in \mathbb{N}$ this is equal to $\floor*{\frac{n -
+1}{2}}$.
+
+The choice of these faulty processes does not matter, as such the minimum and
+maximum number of tolerable faulty processes is equal.
+
+\subsection{Grid}
+
+The quorum of the grid system with the lowest cardinality is the one where
+exclusively the processes of the last row are selected, with a cardinality of
+$k$. In such a system there must be at least $k$ correct, and hence at most
+$k^2 - k$ faulty processes.
+
+Similarly the quorum with the highest cardinality is the one where the first
+row of processes, and one process of each subsequent row, is selected. Its
+cardinality is given as $k + k - 1$, in which case there are at most $k^2 - 2k
++ 1$ faulty tolerable processes.
+
+As such the quorum system can tolerate at least $k^2 - 2k + 1$, and at most
+$k^2 - k$ faulty processes.
 
 \end{document}
