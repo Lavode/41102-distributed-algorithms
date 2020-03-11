@@ -157,11 +157,13 @@ to actually have crashed.
       $\text{detected} := \text{detected} \cup \{p\}$
       $\text{alive} := \text{alive} \setminus \{p\}$
 
-      SEND [p crashed] to all $p' \in \Pi$
+      SEND [p crashed] to all $p' \in \Pi \setminus \{self\}$
+      TRIGGER <P.crash | p>
 
     UPON receive [p crashed] from $p'$:
       $\text{detected} := \text{detected} \cup p$
       $\text{alive} := \text{alive} \cup p$
+      TRIGGER <P.crash | p>
   \end{lstlisting}
 \end{library}
 
