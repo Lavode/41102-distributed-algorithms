@@ -1,0 +1,254 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Distributed algorithms - Series 4}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41102 - Distributed algorithms}
+\title{Series 4}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{3}
+
+\chapter{Series 4}
+
+\section{Emulating a $(1, N)$ register from $(1, 1)$ registers}
+
+\subsection{Emulating a safe binary $(1, N)$ register from safe binary $(1, 1)$ registers}
+
+In order to be a safe binary register, a read on $orn$ must, if there is no
+concurrent write, return the most recently written value. 
+
+This clearly holds as $orn$ does not trigger the $WriteReturn$ event -
+indicating that the write finished - before the last $(1, 1)$ register
+indicates that the write finished. As such, any subsequent non-concurrent read
+will return the most recently written value.
+
+As such, $onr$ is a safe $(1, N)$ register.
+
+\subsection{Emulating a regular binary $(1, N)$ register from regular binary $(1, 1)$ registers}
+\label{seq:regular_binary_register}
+
+In order to be a regular register, a read on $onr$ must, if there is no
+concurrent write, return the most recently written value. If there is a
+concurrent write it must return either the most recently written value, or one
+of the values being currently written.
+
+The first case clearly holds, with identical reasoning as above. The later
+holds as, if any process $q$ reads from $onr$ during a concurrent write, it
+indirectly reads from $br.q$. If $br.q$ already finished its write operation it
+will return the value of the - from the point of view of $onr$ - concurrent
+write. if $br.q$ did not finish its write operation yet then, due to being a
+regular array, it is guaranteed to return either the value it stored previously
+or the value which is being written to $br.q$. These are, from the POV of
+$onr$, either the value of the most recently cmopleted write, or the value of
+the concurrent write.
+
+As such, $onr$ is a regular $(1, N)$ register.
+
+\subsection{Emulating a regular multi-valued $(1, N)$ register from regular multi-valued $(1, 1)$ registers}
+
+As the $(1, N)$ register $orn$ keeps one copy of its stored data in each of the
+$(1, 1)$ registers $br.q$, rather than the data being spread across multiple
+registers, orn is a regular multi-valued $(1, N)$ register using the exact same
+reasoning as in section \ref{seq:regular_binary_register}.
+
+If there is no concurrent write, the value of the most recently completed write
+operation is returned. If there is a concurrent write then, due to $br.q$ being
+a regular register, the returned value is either the one of the most recently
+completed, or of the concurrent write operation.
+
+As such, $onr$ is a regular multi-valued $(1, N)$ register.
+
+
+\section{Multivalued register from binary registers}
+
+Let $br.i, i \in \{1, \ldots k\}$ be regular binary $(1, 1)$ registers. We
+implement a regular multi-valued $(1, 1)$ register as follows:
+
+\begin{library}{Implementing regular multi-valued register $rr$}
+  \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true]
+    init:
+      for i := 1 to k:
+        br.i = 0
+
+    func rr.read():
+      for i := 1 to k:
+        if br.i == 1:
+	  return i
+      return 0
+
+    func rr.write(v):
+      br.v = 1
+      for i := v - 1 to 1:
+        br.i = 0
+  \end{lstlisting}
+\end{library}
+
+Specifically we represent a value $v$ such that the v-th register contains $1$,
+while all other registers at lower indices contain $0$. Writing happens
+right-to-left, reading happens left-to-right.
+
+If there is no concurrent write then a read will, clearly, return the value of
+the most recently completed write operation.
+
+Consider the case of a concurrent write operation. Let $v$ be the value which
+was written to $rr$ previously, and $v'$ be the value which is being written by
+the write operation which is concurrent to the read operation. Let $i$ be the
+index of the register which the read operation is currently reading.
+
+It immediately follows that $i \leq \max\{v\}$, as the read operation
+returns on the first $1$ it encounters. This leaves three situations to
+consider: $i \leq v \leq v'$, $i \leq v' \leq v$, and $v' \leq i \leq v$.
+
+\subsection{$i \leq v \leq v'$}
+
+If the write process sets $br.v = 0$ before the read process reaches $br.v$,
+then the read operation will return $v'$, otherwise it will return $v$.
+
+\subsection{$i \leq v' \leq v$}
+
+In this situation the read process will reach $br.v'$ before $br.v$, so is
+guaranteed to return $v'$.
+
+\subsection{$v' \leq i \leq v$}
+
+As the write process will not set $br.v$ to $0$, as $v > v'$, the read process
+is guaranteed to eventually reach $br.v$ and hence return $v$.
+
+\subsubsection{Regularity of $rr$}
+
+As such, a read operation concurrent to a write operation is guaranteed to
+return either $v$ or $v'$, which makes $rr$ regular.
+
+
+\section{Register emulations without correct majority?}
+
+\end{document}
