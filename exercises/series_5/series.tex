@@ -208,7 +208,7 @@ executions of the algorithm.
 \subsubsection{Execution as in figure 2}
 
 For the two concurrent read operations, consider a message flow as in figure
-\ref{fig_majority_voting_2}. Assume as above that $p.write(x)$ happened before.
+\ref{fig:majority_voting_2}. Assume as above that $p.write(x)$ happened before.
 
 \begin{figure}[h]
     \centering
@@ -271,5 +271,34 @@ $x$.
 \end{library}
 
 \section{$(1, 1)$ atomic register}
+
+The described transformation adjusts each reader to - upon encountering a value
+which is newer (in terms of the write timestamp $wts$) than the one it stores
+itself - update its own value and timestamp to the such-seen tuple. This
+ensures that, once a reader has `seen' a newer value than its own, future reads
+will return it too.
+
+Algorithm 4.2 can be transformed as follows to implement a $(1, 1)$ atomic
+register, Delivery and processing of local messages via a best-effort broadcast
+(that is those messages from $q$ to $q$ itself) is assumed to happen
+immediately and instantly. Changes are highlighted in \textcolor{red}{red},
+with unchanged event handlers left out for brevity.
+
+\begin{library}{Implementing one-reader one-writer atomic register}
+  \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true,escapeinside={<@}{@>},basicstyle=\small]
+    <@\textbf{Implements}@>:
+      <@\textcolor{red}{$(1, 1)$ atomic register, \textbf{instance} ooar}@>
+
+    <@\textbf{upon event}@> $(pl,\ Deliver\ |\ q,\ [VALUE,\ r,\ ts',\ v'])$ such that $r = rid$ <@\textbf{do}@>:
+      $readlist[q] := (ts, v)$
+      <@\textbf{if}@> $\abs{readlist} > N / 2$ <@\textbf{then}@>:
+        // If value newer than 'our' is encountered, we update our storage
+	<@\textcolor{red}{$(val', ts') := highestval(readlist)$}@>
+	<@\textcolor{red}{\textbf{if} $ts' > ts$ \textbf{do}}@>:
+	  <@\textcolor{red}{$(val, ts) := (val', ts')$}@>
+	$readlist := [\bot]^N$
+	<@\textcolor{red}{\textbf{trigger} $(ooar,\ ReadReturn | val)$}@>
+  \end{lstlisting}
+\end{library}
 
 \end{document}
