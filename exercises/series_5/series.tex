@@ -146,12 +146,20 @@
 
 \subsection{Read-one write-all}
 
-The first non-concurrent read operation returning $x$ is a direct result of the
-validity property of a regular register. When the write operation starts, $p$
-will broadcast write messages to all other processes, and will only complete
-the write operation once all healthy processes have acknowledge the write. Any
-subsequent read by $q$ will then return its local value, which is guaranteed to
-be equal to $x$.
+\subsubsection{Execution as in figure 1}
+
+An execution as pictured in figure 1 is not possible with the read-one
+write-all algorithm. As a read will always return the locally stored value, it
+is impossible that, once the new value has been written, a future concurrent
+read will regress to returning the previously stored value.
+
+\subsubsection{Execution as in figure 2}
+
+The non-concurrent read returning the value of the most recently completed
+write follows directly from the validity property of a regular register. In the
+case of the read-one write-all algorithm, a finished write implies that all
+healthy processes have written the value, so any subsequent non-concurrent read
+is guaranteed to return it.
 
 For the case of the two concurrent read operations, consider the message
 flow in figure \ref{fig:read_one_write_all}. Assume that $p.write(x)$ as
@@ -165,21 +173,21 @@ described above took place earlier.
 \end{figure}
 
 The local write of $p$ is assumed to happen immediately after the write
-operation starts, and as such left out for brevity. A read on $q$ concurrent to
-the write on $p$, which happens at a time as shown will return $y$, while a
-subsequent read on $r$ will return $x$, as the write message has not arrived at
-$r$ yet, leading to the requested execution.
-
+operation starts, and as such is left out for brevity. A read on $r$ concurrent
+to the write on $p$ as shown will return $y$, while a subsequent read on $q$
+will return $x$ as the write message has not arrived at $q$ yet.
 
 \subsection{Majority voting regular register}
 
-As above, the first non-concurrent read operation returning $x$ follows from
-the validity property of the algorithm. The write operation will not finish
-before a majority of processes have acknowledged the write. A subsequent
-non-concurrent read will then read data from the majority of processes,
-guaranteeing that at least one of the read $(wts, v)$ tuples is one of the most
-recent write. As the value of the most recent timestamp is then returned, it
-will be $x$.
+As above, the non-concurrent read operation of either execution returning $x$
+follows directly from the validity property of the algorithm. The read having
+finished guarantees that a majority of processes stores the new value, so anu
+subsequent read from a majority of processes will be certain to return it.
+
+Local write and read operations are assumed to happen immediately, with
+messages left out for brevity.
+
+\subsubsection{Execution as in figure 1}
 
 For the case of two concurrent read operations, consider the message flow in
 figure \ref{fig:majority_voting}. Assume that $p.write(x)$ as described above
@@ -188,22 +196,30 @@ took place earlier.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.9\textwidth]{res/5_1_b.png}
-    \caption{Message flow of majority voting algorithm}
+    \caption{Message flow of majority voting algorithm, for execution as in figure 1}
     \label{fig:majority_voting}
 \end{figure}
 
-Local write and read operations are assumed to happen immediately, with
-messages left out for brevity.
+A concurrent read on $q$ might read values from $q$ and $p$, hence returning
+$y$. A subsequent concurrent read might then happen to read values from $q$ and
+$r$, returning $x$. Both these reads were from a majority, so are valid
+executions of the algorithm.
 
-A read on $q$ concurrent to a write on $p$ might read the values stored within
-$q$ and $p$, with no read from $r$ due to eg delays in communication. Such a
-read satisfies the majority criteria and will, as $p$ contains the value and
-timestamp of the concurrent write operation, return $y$.
+\subsubsection{Execution as in figure 2}
 
-A subsequent read on $r$ might read the local data as well as data from $q$
-which once again satisfies the majority criteria. As it might do so before the
-write messages from $p$ have arrived at eitehr $q$ or $r$, the returned value
-will hence be $x$.
+For the two concurrent read operations, consider a message flow as in figure
+\ref{fig_majority_voting_2}. Assume as above that $p.write(x)$ happened before.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{res/5_1_b_2.png}
+    \caption{Message flow of majority voting algorithm, for execution as in figure 2}
+    \label{fig:majority_voting_2}
+\end{figure}
+
+Similiar to above, a concurrent read on $r$ might read from $r$ and $p$,
+returning $y$. A subsequent read on $q$ might read from $q$ and $r$, returning
+$x$.
 
 \section{Read-all write-one regular register}
 
