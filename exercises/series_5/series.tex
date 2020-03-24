@@ -181,7 +181,7 @@ will return $x$ as the write message has not arrived at $q$ yet.
 
 As above, the non-concurrent read operation of either execution returning $x$
 follows directly from the validity property of the algorithm. The read having
-finished guarantees that a majority of processes stores the new value, so anu
+finished guarantees that a majority of processes stores the new value, so any
 subsequent read from a majority of processes will be certain to return it.
 
 Local write and read operations are assumed to happen immediately, with
@@ -217,7 +217,7 @@ For the two concurrent read operations, consider a message flow as in figure
     \label{fig:majority_voting_2}
 \end{figure}
 
-Similiar to above, a concurrent read on $r$ might read from $r$ and $p$,
+Similar to above, a concurrent read on $r$ might read from $r$ and $p$,
 returning $y$. A subsequent read on $q$ might read from $q$ and $r$, returning
 $x$.
 
