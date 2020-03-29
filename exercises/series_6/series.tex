@@ -1,0 +1,225 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Monospaced font with support for bold
+\usepackage[scaled=1.04]{couriers}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Distributed algorithms - Series 6}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41102 - Distributed algorithms}
+\title{Series 6}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{5}
+
+\chapter{Series 6}
+
+\section{Atomic register execution}
+
+Let processes $\{p, q, r, s, t\}$ have ranks $\{5, 4, 3, 2, 1\}$ respectively.
+In the following executions, assume messages between the processes which are not
+mentioned to be delayed up to the point they are mentioned.
+
+\subsection{Execution A}
+
+Consider the following execution:
+
+\begin{description}
+	\item[$ts = 0$] $p$ sends $[WRITE, 1, 5, x]$ to all processes
+	\item[$ts = 0$] $q$ sends $[WRITE, 1, 4, y]$ to all processes
+	\item[$ts = 1$] $[WRITE, 1, 5, x]$ from $p$ arrives at $r$, is
+		processed, corresponding $[ACK]$ is sent back.
+	\item[$ts = 2$] $r$ starts read operation, stores $readval := x$
+	\item[$ts = 2$] $r$ sends out write-back $[WRITE, 1, 5, x]$ to all
+		processes
+	\item[$ts = 3$] $[WRITE, 1, 4, y]$ from $q$ arrives at $s$, is
+		processed, corresponding $[ACK]$ is sent back.
+	\item[$ts = 4$] $s$ starts read operation, stores $readval := y$
+	\item[$ts = 4$] $s$ sends out write-back $[WRITE, 1, 4, y]$ to all
+		processes
+	\item[$ts = 5$] All pending write-back messages are arrived and are
+		processed. No matter the order, as the two timestamps of the
+		writes of $p$ and $q$ are equal, all processes will now store
+		$val = x, ts = 1, wr = 5$.
+	\item[$ts = 5$] Read of $r$ terminates and returns $readval = x$. Read
+		of $s$ terminates and returns $readval = y$.
+	\item[$ts = 6$] All pending write messages by $p$ and $q$ arrive, are
+		processed (being discarded as they do not contain more
+		up-to-date information), corresponding $ACK$s are returned and
+		processed.
+	\item[$ts = 7$] Write operations of $p$ and $q$ terminate.
+	\item[$ts = 8$] Non-concurrent read operation of $t$ commences as per
+		the protocol, returns $readval = x$.
+\end{description}
+
+\subsection{Execution B}
+
+Consider the following execution adapted from the one above, changes
+highlighted in \textcolor{red}{red}. Specifically the messages which arrived
+`early' were switched, with the message of writer $q$ arriving at $r$ early,
+and the one of writer $p$ arriving at $s$ early.
+
+\begin{description}
+	\item[$ts = 0$] $p$ sends $[WRITE, 1, 5, x]$ to all processes
+	\item[$ts = 0$] $q$ sends $[WRITE, 1, 4, y]$ to all processes
+	\item[$ts = 1$] $\textcolor{red}{[WRITE, 1, 4, y]}$ from
+		\textcolor{red}{$q$} arrives at $r$, is processed,
+		corresponding $[ACK]$ is sent back.
+	\item[$ts = 2$] $r$ starts read operation, stores $readval :=
+		\textcolor{red}{y}$
+	\item[$ts = 2$] $r$ sends out write-back $\textcolor{red}{[WRITE, 1, 4,
+		y]}$ to all processes
+	\item[$ts = 3$] $\textcolor{red}{[WRITE, 1, 5, x]}$ from
+		$\textcolor{red}{p}$ arrives at $s$, is processed,
+		corresponding $[ACK]$ is sent back.
+	\item[$ts = 4$] $s$ starts read operation, stores $readval :=
+		\textcolor{red}{x}$
+	\item[$ts = 4$] $s$ sends out write-back $\textcolor{red}{[WRITE, 1, 5,
+		x]}$ to all processes
+	\item[$ts = 5$] All pending write-back messages are arrived and are
+		processed. No matter the order, as the two timestamps of the
+		writes of $p$ and $q$ are equal, all processes will now store
+		$val = x, ts = 1, wr = 5$.
+	\item[$ts = 5$] Read of $r$ terminates and returns $readval =
+		\textcolor{red}{y}$. Read of $s$ terminates and returns
+		$readval = \textcolor{red}{x}$.
+	\item[$ts = 6$] All pending write messages by $p$ and $q$ arrive, are
+		processed (being discarded as they do not contain more
+		up-to-date information), corresponding $ACK$s are returned and
+		processed.
+	\item[$ts = 7$] Write operations of $p$ and $q$ terminate.
+	\item[$ts = 8$] Non-concurrent read operation of $t$ commences as per
+		the protocol, returns $readval = x$.
+\end{description}
+
+\section{Erasure-coded storage}
+
+\end{document}
