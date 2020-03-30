@@ -272,4 +272,15 @@ lagrange interpolation are assumed to be available in external libraries.
 
 \subsection{Difficulties of extending this to regular semantics}
 
+A regular register requires that a read concurrent to a write operation returns
+either the value being currently written, or the most recently written value.
+In the case of a erasure-coded register, however, the information of a value
+$v$ is spread across $n$ different registers, with (generally )no single
+register having sufficient information to reconstruct $v$ on its own.
+
+As such information from multiple registers is needed to read $v$, which, in
+the case of a distributed system, makes it hard to ensure that the set of
+values read from the various registers will be consistent, that is will lead to
+the reconstruction of either the current or the most recently written value.
+
 \end{document}
