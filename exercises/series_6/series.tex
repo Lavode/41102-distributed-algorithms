@@ -222,4 +222,54 @@ and the one of writer $p$ arriving at $s$ early.
 
 \section{Erasure-coded storage}
 
+\subsection{Storage efficiency of $n$-node system with $f < \frac{n}{2}$ failing nodes}
+
+As at most $f < \frac{n}{2}$ nodes will fail, any $(\ceil{\frac{n}{2}}, n)$
+erasure code will be able to store data safely. As an example, consider the
+following Reed-Solomon code:
+
+Let $k := \ceil{\frac{n}{2}}$. To store a message $m$, split it into
+bit-strings of length $k$. For each such string $m_i := (x_1, \cdots, x_k)$,
+compute the Lagrange polynomial $p$ such that $p(i - 1) = x_i$. Then, store the
+value of $p(i)$ on node number $i\ \forall\ 0 \leq i \leq n - 1$.
+
+As at most $f < \frac{n}{2}$ nodes will fail and $f$ is an integer, it holds
+that $n - f \geq \ceil{\frac{n}{2}}$, which is a sufficient number of fragments
+to reconstruct $m_i$.
+
+Such a system (or, in fact, any $(\ceil{\frac{n}{2}}, n)$ erasure code) will
+have a storage efficiency of $\approx \SI{50}{\percent}$.
+
+\subsection{Erasure-coded safe register from algorithm 4.2}
+
+Algorithm 4.2 can be adjusted as follows, to implement an erasure-coded safe
+registers. Changes to existing event handler are in \textcolor{red}{red}, with
+unchanged event handlers left out for brevity. Well-known procedures such as
+lagrange interpolation are assumed to be available in external libraries.
+
+\begin{library}{Implementing one-reader one-writer atomic register}
+  \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true,escapeinside={<@}{@>},basicstyle=\small]
+    <@\textbf{Implements}@>:
+      <@\textcolor{red}{$(1, N)$ safe register, \textbf{instance} onsr}@>
+
+    <@\textbf{upon event}@> $(onsr,\ Write\ |\ v)$ <@\textbf{do}@>:
+      // $v = (v_1, \cdots, v_k), k = N/2$
+      $wts := wts + 1$
+      $acks := 0$
+      <@\textcolor{red}{$p := \text{lagrange\_interpolation}((0, v_1), \cdots, (k - 1, v_k))$}@>
+      <@\textcolor{red}{\textbf{for} $i := 1$ to $N$:}@>
+	<@\textcolor{red}{\textbf{trigger} $(pl,\ send\ |\ p_i,\ [WRITE,\ ts',\ p(v_i)])$}@>
+
+    <@\textbf{upon event}@> $(pl,\ Deliver\ |\ q,\ [VALUE,\ r,\ ts',\ v'])$ <@\textbf{such that}@> $r = rid$ <@\textbf{do}@>:
+      $readlist[q] := (ts', v')$
+      <@\textbf{if}@> $\abs{readlist} > N/2$ <@\textbf{then}@>:
+	<@\textcolor{red}{$p := \text{reconstruct\_polynom}(readlist)$}@>
+        <@\textcolor{red}{\textbf{for} $i := 1$ to $N/2$:}@>
+	  <@\textcolor{red}{$v_i := p(i- 1)$}@>
+	<@\textcolor{red}{\textbf{trigger} $(onsr,\ ReadReturn\ |\ (v_1, \cdots, v_{N/2})$}@>
+  \end{lstlisting}
+\end{library}
+
+\subsection{Difficulties of extending this to regular semantics}
+
 \end{document}
