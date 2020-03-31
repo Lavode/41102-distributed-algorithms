@@ -247,26 +247,30 @@ registers. Changes to existing event handler are in \textcolor{red}{red}, with
 unchanged event handlers left out for brevity. Well-known procedures such as
 lagrange interpolation are assumed to be available in external libraries.
 
-\begin{library}{Implementing one-reader one-writer atomic register}
+\begin{library}{Implementing one-reader n-writer safe register}
   \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true,escapeinside={<@}{@>},basicstyle=\small]
     <@\textbf{Implements}@>:
       <@\textcolor{red}{$(1, N)$ safe register, \textbf{instance} onsr}@>
 
     <@\textbf{upon event}@> $(onsr,\ Write\ |\ v)$ <@\textbf{do}@>:
-      // $v = (v_1, \cdots, v_k), k = N/2$
+      <@\textcolor{red}{$k := \ceil{N/2}$}@>
+      <@\textcolor{red}{$(v_1 || \cdots || v_k) := v$}@>
       $wts := wts + 1$
       $acks := 0$
+      // Interpolate polynomial of degree (k-1)
       <@\textcolor{red}{$p := \text{lagrange\_interpolation}((0, v_1), \cdots, (k - 1, v_k))$}@>
       <@\textcolor{red}{\textbf{for} $i := 1$ to $N$:}@>
-	<@\textcolor{red}{\textbf{trigger} $(pl,\ send\ |\ p_i,\ [WRITE,\ ts',\ p(v_i)])$}@>
+	<@\textcolor{red}{\textbf{trigger} $(pl,\ send\ |\ p_i,\ [WRITE,\ wts,\ (i - 1,\ p(i - 1))])$}@>
 
     <@\textbf{upon event}@> $(pl,\ Deliver\ |\ q,\ [VALUE,\ r,\ ts',\ v'])$ <@\textbf{such that}@> $r = rid$ <@\textbf{do}@>:
-      $readlist[q] := (ts', v')$
+      <@\textcolor{red}{$k := \ceil{N/2}$}@>
+      <@\textcolor{red}{$(i, p_i) := v'$}@>
+      <@\textcolor{red}{$readlist[i] := p_i$}@>
       <@\textbf{if}@> $\abs{readlist} > N/2$ <@\textbf{then}@>:
-	<@\textcolor{red}{$p := \text{reconstruct\_polynom}(readlist)$}@>
-        <@\textcolor{red}{\textbf{for} $i := 1$ to $N/2$:}@>
+	<@\textcolor{red}{$p := \text{lagrange\_interpolation}(readlist)$}@>
+        <@\textcolor{red}{\textbf{for} $i := 1$ to $k$:}@>
 	  <@\textcolor{red}{$v_i := p(i- 1)$}@>
-	<@\textcolor{red}{\textbf{trigger} $(onsr,\ ReadReturn\ |\ (v_1, \cdots, v_{N/2})$}@>
+	<@\textcolor{red}{\textbf{trigger} $(onsr,\ ReadReturn\ |\ (v_1 || \cdots || v_{k})$}@>
   \end{lstlisting}
 \end{library}
 
