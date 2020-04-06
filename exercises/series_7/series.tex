@@ -1,0 +1,207 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Monospaced font with support for bold
+\usepackage[scaled=1.04]{couriers}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Distributed algorithms - Series 7}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41102 - Distributed algorithms}
+\title{Series 7}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{6}
+
+\chapter{Series 7}
+
+\section{Worst-case latency of eager reliable broadcast}
+
+In a worst-case execution, all intermediary processes (those broadcasting a
+message after they delivered it) will manage to reach exactly one process which
+has not delivered the message yet, before crashing. The first (of which all
+messages except one are delayed until the end of the execution) and last
+process keep running.
+
+In other words:
+\begin{itemize}
+	\item Let $\Pi = \{p_1, \cdots, p_n\}$
+	\item $p_1$ broadcasts $[DATA, p_1, m]$ to all processes, all messages
+		except the one to $p_2$ will be delayed until the end of the
+		execution.
+	\item $p_2$ delivers $[DATA, p_1, m]$ from $p_1$ and broadcasts it to
+		all processes
+	\item $p_3$ delivers $[DATA, p_1, m]$ from $p_2$ and broadcasts it to
+		all processes
+	\item $p_2$ crashes
+	\item $\cdots$
+	\item $p_n$ delivers $[DATA, p_1, m]$ from $p_{n - 1}$ and broadcasts
+		it to all processes
+	\item $p_{n - 1}$ crashes
+\end{itemize}
+
+With $\abs{\Pi} = n$ this will have produced to $O(n^2)$ messages of which
+$O(n)$, were delivered, with a total number of $n$ `hops' from original source
+to final destination.
+
+\section{Uniform reliable broadcast in the fail-stop model}
+
+\subsection{No strong completness}
+
+If the failure detector does not offer strong completness, then a process may
+fail without the failure detector recognizing it.
+
+Assume $p$ is broadcasting a message $m$, and $q$ has failed without $p$'s
+failure detector recognizing it. In such a case, $p$ will wait forever for $q$
+acknowledge the delivery of $m$, which will never happen. This violate's the
+validy property of $p$, as it will never terminate. Since there are extensions
+of this execution - namely ones where $q$ is detected as having crashed - where
+the property would hold, this is a liveness violation.
+
+\subsection{No strong accuracy}
+
+If the failure detector does not offer strong accuracy, then it might suspect a
+correct process of having crashed.
+
+Assume $p$ is broadcasting a message $m$, and $q$ is erroneously detected as
+having crashed by all other processes including $p$. Assume further that no
+messages from other processes are currently arriving at $q$.
+
+Once all processes have received each others' acnkowledgement that they
+$beb$-delivered $m$, they will all $urb$-deliver $m$. If all these processes
+then crash, there are processes which $urb$-delivered $m$, yet the correct
+process $q$ will never $urb$-deliver $m$, thereby violating the uniform
+agreement property. As any extension of an execution where all processes except
+$q$ crashed will also have the property violated (since there is none to send
+the message to $q$), this is a safety violation.
+
+\section{FIFO broadcast from FIFO links}
+
+\end{document}
