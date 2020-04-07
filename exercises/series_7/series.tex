@@ -204,4 +204,19 @@ the message to $q$), this is a safety violation.
 
 \section{FIFO broadcast from FIFO links}
 
+A FIFO reliable broadcast has to fulfill properties RB1 through RB4, as well as
+FRB5.
+
+As a FIFO perfect link has all the properties of a regular perfect link,
+algorithm 3.3 using FIFO perfect links in place of perfect links is guaranteed
+to have properties RB1 through RB4.
+
+Consider now process $p$ broadcasting messages $m_1$ and $m_2$ in sequence. If
+$m_2$ is subsequently delivered - via any FIFO perfect link - at process $q$,
+then the `FIFO delivery' property of a FIFO perfect link guarantees that
+message $m_1$ was delivered - via that same link - at process $q$ earlier. From
+this property FRB5 follows, as the modified algorithm 3.3 is guaranteed to not
+`see' $m_2$ before $m_1$ - at least assuming processes are single-threaded and
+event handlers are atomic.
+
 \end{document}
