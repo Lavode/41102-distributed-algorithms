@@ -167,8 +167,8 @@ In other words:
 	\item $p_{n - 1}$ crashes
 \end{itemize}
 
-With $\abs{\Pi} = n$ this will have produced to $O(n^2)$ messages of which
-$O(n)$, were delivered, with a total number of $n$ `hops' from original source
+With $\abs{\Pi} = n$ this will have produced $O(n^2)$ messages of which
+$O(n)$ were delivered, with a total number of $n$ `hops' from original source
 to final destination.
 
 \section{Uniform reliable broadcast in the fail-stop model}
@@ -179,11 +179,11 @@ If the failure detector does not offer strong completness, then a process may
 fail without the failure detector recognizing it.
 
 Assume $p$ is broadcasting a message $m$, and $q$ has failed without $p$'s
-failure detector recognizing it. In such a case, $p$ will wait forever for $q$
-acknowledge the delivery of $m$, which will never happen. This violate's the
+failure detector recognizing it. In such a case, $p$ will wait for $q$ to
+acknowledge the delivery of $m$, which will never happen. This violate the
 validy property of $p$, as it will never terminate. Since there are extensions
-of this execution - namely ones where $q$ is detected as having crashed - where
-the property would hold, this is a liveness violation.
+of this execution - namely ones where $q$ is eventually detected as having
+crashed - where the property would hold, this is a liveness violation.
 
 \subsection{No strong accuracy}
 
@@ -194,7 +194,7 @@ Assume $p$ is broadcasting a message $m$, and $q$ is erroneously detected as
 having crashed by all other processes including $p$. Assume further that no
 messages from other processes are currently arriving at $q$.
 
-Once all processes have received each others' acnkowledgement that they
+Once all processes have received each others' acknowledgement that they
 $beb$-delivered $m$, they will all $urb$-deliver $m$. If all these processes
 then crash, there are processes which $urb$-delivered $m$, yet the correct
 process $q$ will never $urb$-deliver $m$, thereby violating the uniform
