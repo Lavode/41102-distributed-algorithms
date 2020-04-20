@@ -172,7 +172,6 @@ deliver the messages in the same sequence.
 
     <@\textbf{upon init} \textbf{do}@>:
       $val := \bot$
-      $rid := 1$
 
     <@\textbf{upon event}@> $(nnar,\ Write\ |\ v)$ <@\textbf{do}@>:
       <@\textbf{trigger} $(tob,\ Broadcast\ |\ [WRITE,\ val])$@>
@@ -183,24 +182,52 @@ deliver the messages in the same sequence.
         <@\textbf{trigger} $(nnar,\ WriteReturn)$@>
 
     <@\textbf{upon event}@> $(nnar,\ Read)$ <@\textbf{do}@>:
-      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [READ, rid])$@>
+      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [READ])$@>
 
-    <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [READ,\ rid])$ <@\textbf{do}@>:
-      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [DATA,\ rid,\ p,\ val])$@>
-
-    <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [DATA,\ rid',\ p',\ val'])$ <@\textbf{do}@>:
-      if $p' = self$ and $rid' = rid$:
-        $rid := rid + 1$
-        <@\textbf{trigger} $(nnar,\ ReadReturn\ |\ val')$@>
+    <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [READ])$ <@\textbf{do}@>:
+      if $p = self$:
+        <@\textbf{trigger} $(nnar,\ ReadReturn\ |\ val)$@>
       
   \end{lstlisting}
 \end{library}
 
-% TODO: Not atomic, consider w(v), r(), w(v'), r() with the `[DATA ...]`
-% message as a result of the first r() being delayed and delivered *after* the
-% DATA message of the second r(). TOB does not preserve causality, leads to
-% 'regression' of value with multiple sequential reads.
+The termination property follows directly from the validity and agreement
+properties of the total-order broadcast, as any message broadcast by a correct
+process will eventually be delivered by itself, as well as any other correct
+process. Hence both the $WRITE$ as well as the $READ$ messages will arrive
+eventually, making the implementation terminate.
+
+The atomicity follows from the property of a total-order broadcasts that
+messages can be linearized to the same linear sequence across multiple
+processes - in other words that the eventual sequence of delivered messages
+will be the same for each process.
+
+As such, when a process delivers its $READ$ message $r_1$ and then returns the
+locally stored value, it is guaranteed that the result of any subsequent read
+operation - which comes with its own $READ$ message $r_2$ - will have that
+$r_2$ delivered after $r_1$, ensuring that the returned value will be equal or
+newer.
 
 \section{Replicated register with local read}
+
+As total-order broadcast only guarantees that, for any process, the history of
+delivered messages $(m_1 \cdots m_{n-1})$ when delivering a message $m_n$ will
+be equal, but does not provide any guarantees about what the message history of
+other processes is now, or will be in the future, a local read might break
+atomicity. As an example consider the following execution with two processes,
+$p$ and $q$.
+
+\begin{itemize}
+	\item $p$ nnar-writes $x$, broadcasts $[WRITE, x]$
+	\item $p$ tob-delivers $[WRITE, x]$, sets $val := x$, nnar-write-returns
+	\item $p$ nnar-reads, reads locally, returns $val = x$
+	\item $q$ nnar-reads, reads locally, returns $val = \bot$
+	\item $q$ tob-delivers  $[WRITE, x]$
+\end{itemize}
+
+The total-order property holds, as the tob-delivered messages of both processes
+are $([WRITE, x])$. And yet, the atomicity property of the regular register is
+violated as the second read returned an earlier value than a read preceeding
+it.
 
 \end{document}
