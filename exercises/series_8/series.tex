@@ -1,0 +1,206 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Monospaced font with support for bold
+\usepackage[scaled=1.04]{couriers}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Distributed algorithms - Series 8}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41102 - Distributed algorithms}
+\title{Series 8}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{7}
+
+\chapter{Series 8}
+
+\section{Total-order broadcast using consensus}
+
+\subsection{Importance of deterministic ordering on consensus set}
+
+The consensus will decide on a set of messages which to deliver. A set in the
+mathematical sense, as well as in many practical implementations, has no
+deterministic ordering of its elements. As such, while all processes will
+deliver the same messages, they might not all deliver it in the same order.
+This violates the total order property of a total-order broadcast.
+
+\subsection{Implementation without deterministic ordering}
+
+A total-order broadcast without the use of a deterministic sorting of payload
+messages can be achieved by changing the implementation such that each process
+proposes a single message to the consensus. The consensus will then agree on
+delivering one message at a time, which will guarantee that all processes
+deliver the messages in the same sequence.
+
+\section{Atomic register as a replicated state machine}
+
+\begin{library}{Implementing (N N) atomic register using total-order broadcast}
+  \begin{lstlisting}[mathescape=true,autogobble=true,breaklines=true,escapeinside={<@}{@>},basicstyle=\small]
+    <@\textbf{Implements}@>:
+      $(N, N)$ atomic register, <@\textbf{instance} nnar@>
+
+    <@\textbf{Uses}@>:
+      Total-order broadcast, <@\textbf{instance} tob@>
+
+    <@\textbf{upon init} \textbf{do}@>:
+      $val := \bot$
+      $rid := 1$
+
+    <@\textbf{upon event}@> $(nnar,\ Write\ |\ v)$ <@\textbf{do}@>:
+      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [WRITE,\ val])$@>
+
+    <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [WRITE,\ val'])$ <@\textbf{do}@>:
+      $val := val'$
+      if $p = self$:
+        <@\textbf{trigger} $(nnar,\ WriteReturn)$@>
+
+    <@\textbf{upon event}@> $(nnar,\ Read)$ <@\textbf{do}@>:
+      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [READ, rid])$@>
+
+    <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [READ,\ rid])$ <@\textbf{do}@>:
+      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [DATA,\ rid,\ p,\ val])$@>
+
+    <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [DATA,\ rid',\ p',\ val'])$ <@\textbf{do}@>:
+      if $p' = self$ and $rid' = rid$:
+        $rid := rid + 1$
+        <@\textbf{trigger} $(nnar,\ ReadReturn\ |\ val')$@>
+      
+  \end{lstlisting}
+\end{library}
+
+% TODO: Not atomic, consider w(v), r(), w(v'), r() with the `[DATA ...]`
+% message as a result of the first r() being delayed and delivered *after* the
+% DATA message of the second r(). TOB does not preserve causality, leads to
+% 'regression' of value with multiple sequential reads.
+
+\section{Replicated register with local read}
+
+\end{document}
