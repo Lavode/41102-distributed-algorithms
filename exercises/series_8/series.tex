@@ -222,12 +222,12 @@ $p$ and $q$.
 	\item $p$ tob-delivers $[WRITE, x]$, sets $val := x$, nnar-write-returns
 	\item $p$ nnar-reads, reads locally, returns $val = x$
 	\item $q$ nnar-reads, reads locally, returns $val = \bot$
-	\item $q$ tob-delivers  $[WRITE, x]$
+	\item $q$ tob-delivers  $[WRITE, x]$, sets $val := x$
 \end{itemize}
 
 The total-order property holds, as the tob-delivered messages of both processes
-are $([WRITE, x])$. And yet, the atomicity property of the regular register is
-violated as the second read returned an earlier value than a read preceeding
-it.
+are $([WRITE, x])$. As a result both state machines are in sync, and yet the
+atomicity property of the regular register is violated as the second read
+returned an earlier value than a read preceeding it.
 
 \end{document}
