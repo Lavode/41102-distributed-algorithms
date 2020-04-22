@@ -173,8 +173,8 @@ deliver the messages in the same sequence.
     <@\textbf{upon init} \textbf{do}@>:
       $val := \bot$
 
-    <@\textbf{upon event}@> $(nnar,\ Write\ |\ v)$ <@\textbf{do}@>:
-      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [WRITE,\ val])$@>
+    <@\textbf{upon event}@> $(nnar,\ Write\ |\ val')$ <@\textbf{do}@>:
+      <@\textbf{trigger} $(tob,\ Broadcast\ |\ [WRITE,\ val'])$@>
 
     <@\textbf{upon event}@> $(tob,\ Deliver\ |\ p,\ [WRITE,\ val'])$ <@\textbf{do}@>:
       $val := val'$
