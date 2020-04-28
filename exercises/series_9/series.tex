@@ -155,10 +155,10 @@ the following execution where the number of rounds of $p$ is lowered to $1$.
 \begin{itemize}
 	\item $p$ proposes $x$, broadcasts $[PROPOSAL, 1, \{x\}]$
 	\item $q$ proposes $y$, broadcasts $[PROPOSAL, 1, \{y\}]$
-	\item $p$ beb-delivers $[PROPOSAL, 1, \{y\}]$ and $[PROPOSAL, 1,
-		\{x\}]$.
+	\item $p$ beb-delivers $[PROPOSAL, 1, \{x\}]$ and $[PROPOSAL, 1,
+		\{y\}]$.
 	\item As $p$ has received messages from all healthy processes, and $r =
-		N - 1 = 1$ it decides $y$.
+		N - 1 = 1$ it decides $x$.
 	\item $p$ crashes. $q$ detects $p$ as having crashed.
 	\item $q$ beb-delivers $[PROPOSAL, 1, \{y\}]$. As it has received
 		messages from all healthy processes, it proceeds to round $r =
@@ -181,12 +181,12 @@ Consider the following execution.
 	\item $q$ proposes $y$, broadcasts $[PROPOSAL, 1, \{y\}]$
 	\item $p$ beb-delivers both messages, proceeds to round $r = 2$, broadcasts $[PROPOSAL, 2, \{x, y\}]$
 	\item $q$ suspects $p$ of having crashed
-	\item $q$ beb-delivers $[PROPOSAL, 1, \{y\}]$, proceeds to round $r = 2$, broadasts $[PROPOSAL, 2, \{y\}]$
+	\item $q$ beb-delivers $[PROPOSAL, 1, \{y\}]$, proceeds to round $r = 2$, broadcasts $[PROPOSAL, 2, \{y\}]$
 	\item $p$ beb-delivers $[PROPOSAL, 2, \{x, y\}]$ and $[PROPOSAL, 2, \{y\}]$, decides $x$
 	\item $q$ beb-delivers $[PROPOSAL, 2, \{y\}]$, decides $y$.
 \end{itemize}
 
-This violates the uniform agreeement property once more, as two processes have
+This violates the uniform agreement property once more, as two processes have
 decided on different values. Hence the given algorithm does not work with an
 eventually-perfect failure detector, as excluding correct processes which are
 suspected of having crashed can cause issues as shown.
@@ -210,8 +210,9 @@ property of the uniform consensus.
 \subsection{Example}
 
 Consider a system with four processes $p, q, r, s$, with ranks in order $1, 2,
-3, 4$. Assume that we relax the requirement to $F = N/2$, so no majority of
-correct processes is required. Consider then the following execution.
+3, 4$. Assume that we relax the requirement (and hence the `quorum' size) to $F =
+N/2$, so no majority of correct processes is required. Consider then the
+following execution.
 
 \begin{itemize}
 	\item An epoch starts for all processes, with $p$ as a leader and epoch
@@ -241,6 +242,15 @@ correct processes is required. Consider then the following execution.
 This leads to $p$ and $q$ deciding $x$, and $r$ and $s$ deciding $z$, violating
 the uniform agreement property.
 
-\section{Leader-Driven Consensus, optimized}
+\section{Leader-Driven Consensus, optimised}
+
+The READ and STATE messages in the epoch consensus serve to establish the
+lock-in property. Specifically, if a leader has decided in an earlier epoch, the
+current epoch's leader must decide the same value.
+
+In the case of the first epoch consensus there cannot have been an earlier
+decision, as there was no earlier epoch. All processes are guaranteed to still
+have their state set to what they were initialised with, so this set of
+messages can be left out.
 
 \end{document}
