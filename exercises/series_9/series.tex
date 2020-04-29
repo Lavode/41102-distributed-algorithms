@@ -203,16 +203,24 @@ correct processes.
 
 \subsection{Violations if lacking majority of correct processes}
 
-If there is no majority of correct processes, then the lock-in property of the
-epoch consensus can be violated, which then violates the uniform agreement
-property of the uniform consensus.
+If there is no majority of correct processes yet the quorum size remains
+untouched, then the termination process will be violated as the leader will be
+waiting - indefinitely - for sufficiently many responses from correct
+processes.
+
+If the `quorum' size was lowered such that the leader only waits for however
+many correct processes are available, then the resulting sets of processes
+would not be quorums (as they might not necessarily overlap in at least one
+process), which then might violate the lock-in property of the epoch consensus
+and, subsequently, the uniform agreement property of the uniform consensus.
 
 \subsection{Example}
 
-Consider a system with four processes $p, q, r, s$, with ranks in order $1, 2,
-3, 4$. Assume that we relax the requirement (and hence the `quorum' size) to $F =
-N/2$, so no majority of correct processes is required. Consider then the
-following execution.
+As an example for violating the uniform agreement property if the `quorum' size
+is relaxed, consider a system with four processes $p, q, r, s$ with ranks in
+order $1, 2, 3, 4$. Assume that we relax the requirement (and hence the
+`quorum' size) to $F = N/2$, so no majority of correct processes is required.
+Consider then the following execution.
 
 \begin{itemize}
 	\item An epoch starts for all processes, with $p$ as a leader and epoch
@@ -241,6 +249,12 @@ following execution.
 
 This leads to $p$ and $q$ deciding $x$, and $r$ and $s$ deciding $z$, violating
 the uniform agreement property.
+
+As an example for violating the termination property if the quorum size remains
+untouched, simply consider the case where $r$ and $s$ have crashed in the
+beginning. The leader $p$ will then, after having broadcast a READ, wait for 3
+STATE messages - a requirement which will never be satisfied as only 2 correct
+processes remain.
 
 \section{Leader-Driven Consensus, optimised}
 
