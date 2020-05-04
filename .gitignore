@@ -5,3 +5,7 @@ exercises/**/*.pdf
 
 summary/**/*.log
 summary/**/*.pdf
+
+.vagrant
+# Skeleton code provided by assistants
+exercises/project_1/proj01

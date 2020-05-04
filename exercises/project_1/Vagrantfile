@@ -1,0 +1,15 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "debian/contrib-buster64"
+
+  config.hostmanager.enabled      = true
+  config.hostmanager.manage_host  = true
+  config.hostmanager.manage_guest = true
+
+  config.vm.define 'dalg' do |cfg|
+    cfg.vm.hostname = 'dalg.local'
+
+    cfg.vm.synced_folder '.', '/mnt/project_1', type: 'rsync'
+
+    cfg.vm.provision :shell, path: 'provisioning.sh'
+  end
+end
