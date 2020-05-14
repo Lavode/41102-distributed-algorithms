@@ -25,7 +25,7 @@ window where the write arrived at one host but not the other is rather narrow,
 and our interaction with `etcd` via `popen` is rather slow.
 
 ```
-vagrant@dalg:~/etcdproj$ python example.py 
+vagrant@dalg:~/etcdproj$ python violation.py 
 ---
 Node 1: write(violation, 0)
 Node 1: read(violation) => 0
