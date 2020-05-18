@@ -1,0 +1,192 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Monospaced font with support for bold
+\usepackage[scaled=1.04]{couriers}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% Coloured boxes!
+\usepackage[most]{tcolorbox}
+\newtcolorbox{library}[2][]{
+	enhanced,
+	sharp corners,
+	coltitle=black, % title colour
+	colbacktitle=black!10!white, % title bg colour
+	halign title=center, % title align
+	toptitle=1mm, % Top/bottom additional spacing for title
+	bottomtitle=1mm,
+	fonttitle=\ttfamily,
+	colback=white, % body bg colour
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+\newtcolorbox{boxcomment}[2][]{
+	enhanced,
+	colframe=white, % frame colour
+	colbacktitle=white, % title bg colour
+	halign=center, % body align
+	colback=white, % body bg colour
+	fonttitle=\ttfamily,
+	fontupper=\ttfamily,
+	title=#2,#1
+}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{41100 - Distributed algorithms - Series 11}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{41102 - Distributed algorithms}
+\title{Series 11}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{10}
+
+\chapter{Series 11}
+
+\section{Fast Byzantine consensus}
+
+\subsection{Fast decision after $N - 2F$ correct messages}
+
+A correct process in the fast byzantine consensus can fast decide if it
+received $N - F$ identical proposals, of which at least $N - 2F$ proposals were
+from correct processes. This requirement ensures the agreement property, as:
+\begin{itemize}
+	\item Any other fast-deciding process will also have received at least
+		$N - 2F$ identical proposals from correct processes, of which
+		any set of $N - 2F$ processes (under the assumptions of the
+		algorithm) will overlap, guaranteeing agreement among
+		fast-deciding processes,
+	\item and any process which decides via regular byzantine consensus
+		will receive at least $N - 2F$ proposals from correct
+		processes, of which at least $N - 3F$ are identical, which will
+		(again under the assumptions of the algorithm) be an absolute
+		majority of received proposals, as shown below.
+\end{itemize}
+
+\subsection{Requirement of $N > 5F$}
+
+Consider the agreement property, which requires that no two correct processes
+decide differently. Assume that a correct process $p$ fast-decides $v$, while
+another correct process $q$ BC-decides (so via regular byzantine consensus).
+Per the agreement property it must follow that $q$ has also decided for $v$.
+
+As $p$ fast-decided $v$, it must have received $N - F$ proposals for $v$, of
+which at least $N - 2F$ were from correct processes. As such there were at most
+$F$ correct processes which might have proposed another value $v' \neq v$, of
+which $p$ is not aware.
+
+As $q$ BC-decided, it must have received $N - F$ proposals. Of these, at most
+$2F$ can have been for $v'$: $F$ of the byzantine processes, and $F$ of those
+correct processes which $p$ was not aware of. This implies that $q$ has
+received at least $N - 3F$ proposals for $v$.
+
+As $q$ will decide a value for which it receives $\frac{N - F}{2}$ proposals,
+it must hold that more than half its received proposals are for $v$.
+
+This is satisfied for $N > 5F$:
+\[
+	N - 3F \geq 2F + 1 > 2F + \frac{1}{2}
+\]
+
+But not for $N > 4F$, hence the requirement for $N > 5F$.
+
+\end{document}
